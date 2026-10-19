@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Memory Bedroom Escape — 16-Bit Midnight Birthday Edition</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="relative flex flex-col justify-between h-screen w-screen overflow-hidden">
+
+<!-- Canvas -->
+<div class="stage absolute inset-0 z-0 flex items-center justify-center">
+  <div class="canvas-frame">
+    <canvas id="gameCanvas" class="w-full h-full"></canvas>
+  </div>
+</div>
+
+<!-- Intro -->
+<div id="introScreen" class="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 text-center transition-opacity duration-1000" style="background:radial-gradient(circle at 50% 35%, #232041, #05060e 75%)">
+  <canvas id="introStars" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+  <div class="relative max-w-xl w-full p-8 rounded-3xl pixel-box text-yellow-100 space-y-6">
+    <div class="text-5xl animate-warm-pulse">🌙</div>
+    <div id="typewriterText" class="text-sm md:text-base leading-relaxed font-semibold min-h-[140px] flex items-center justify-center text-yellow-100"></div>
+    <button id="startBtn" class="hidden px-8 py-4 pixel-btn text-yellow-950 font-bold rounded-2xl text-sm md:text-base cursor-pointer animate-bounce">ลืมตาในห้องนอนยามดึก 🌙</button>
+  </div>
+</div>
+
+<!-- HUD -->
+<header id="gameHUD" class="relative z-10 p-3 md:p-4 flex justify-between items-center max-w-4xl mx-auto w-full pointer-events-none opacity-0 transition-opacity duration-500">
+  <div class="pixel-box px-4 py-2.5 rounded-2xl flex items-center gap-3 pointer-events-auto">
+    <span class="text-2xl">🗝️</span>
+    <div>
+      <h1 id="questTitle" class="text-xs md:text-sm font-bold text-yellow-200">ประตูห้องถูกล็อก! สำรวจภารกิจความทรงจำในห้องนอน (0/4)</h1>
+      <div class="flex items-center gap-2 mt-1">
+        <p id="questProgress" class="text-[10px] font-bold text-yellow-400 font-pixel">0/4</p>
+        <div class="w-28 bg-stone-950 rounded-full h-2.5 border border-yellow-600/50 overflow-hidden">
+          <div id="progressBar" class="h-full w-0 transition-all duration-500" style="background:linear-gradient(90deg,#fef08a,#facc15)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button id="audioToggleBtn" class="pixel-btn p-3 rounded-2xl text-yellow-950 pointer-events-auto"><i class="fa-solid fa-volume-high text-base"></i></button>
+</header>
+
+<!-- Interact prompt -->
+<div id="interactPrompt" class="relative z-20 mx-auto mb-2 pointer-events-auto hidden">
+  <button id="actionBtn" class="px-6 py-3.5 pixel-btn text-yellow-950 font-bold text-xs md:text-sm rounded-2xl animate-bounce flex items-center gap-2">
+    <i class="fa-solid fa-hand-pointer text-yellow-900"></i><span id="actionBtnText"></span>
+  </button>
+</div>
+
+<!-- Mobile controls -->
+<div id="mobileControls" class="relative z-20 p-4 w-full max-w-md mx-auto flex justify-between items-end pointer-events-none opacity-0 transition-opacity duration-500 md:hidden mb-2">
+  <div class="grid grid-cols-3 gap-2 w-36 h-36 pointer-events-auto">
+    <div></div><button id="btnUp" class="pixel-btn rounded-xl text-yellow-950 text-lg">▲</button><div></div>
+    <button id="btnLeft" class="pixel-btn rounded-xl text-yellow-950 text-lg">◀</button>
+    <div class="flex items-center justify-center text-[9px] text-yellow-300 font-bold">WALK</div>
+    <button id="btnRight" class="pixel-btn rounded-xl text-yellow-950 text-lg">▶</button>
+    <div></div><button id="btnDown" class="pixel-btn rounded-xl text-yellow-950 text-lg">▼</button><div></div>
+  </div>
+  <div class="pointer-events-auto">
+    <button id="btnMobileAction" class="w-16 h-16 pixel-btn rounded-2xl flex flex-col items-center justify-center text-yellow-950">
+      <i class="fa-solid fa-hand text-xl"></i><span class="text-[9px] font-bold mt-1">INTERACT</span>
+    </button>
+  </div>
+</div>
+
+<!-- Puzzle modal -->
+<div id="puzzleModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/90 hidden opacity-0 transition-opacity duration-300">
+  <div class="pixel-box p-6 rounded-3xl max-w-md w-full relative space-y-4 pop-in">
+    <div class="flex items-center gap-3 border-b border-yellow-600/40 pb-3">
+      <div id="modalIcon" class="w-12 h-12 rounded-2xl bg-yellow-500/20 border border-yellow-400/50 flex items-center justify-center text-2xl">🏮</div>
+      <div>
+        <h3 id="modalTitle" class="text-sm md:text-base font-bold text-yellow-200"></h3>
+        <p id="modalSubtitle" class="text-[11px] text-yellow-400">Memory Puzzle Quest</p>
+      </div>
+    </div>
+    <div id="puzzleBody" class="p-4 bg-stone-950/90 rounded-2xl border border-yellow-600/30 text-xs md:text-sm text-yellow-100 space-y-3 font-medium leading-relaxed"></div>
+    <div class="flex gap-2">
+      <button id="solveBtn" class="flex-1 py-3.5 pixel-btn text-yellow-950 text-xs md:text-sm font-bold rounded-xl hidden"></button>
+      <button id="closeModalBtn" class="flex-1 py-3.5 pixel-btn text-yellow-950 text-xs md:text-sm font-bold rounded-xl">ปิดหน้าต่าง</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ending modal -->
+<div id="endingModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/90 hidden opacity-0 transition-opacity duration-1000">
+  <div class="pixel-box p-6 md:p-8 rounded-3xl max-w-lg w-full text-center space-y-5 pop-in">
+    <div class="text-5xl"><span id="candleFlame" class="inline-block animate-bounce">🕯️🎂</span></div>
+    <h2 class="text-lg md:text-xl font-bold text-yellow-300">Happy Birthday! 🎉✨</h2>
+    <div class="p-4 rounded-2xl bg-stone-950 border border-yellow-500/40 text-left text-xs md:text-sm text-yellow-100 leading-relaxed space-y-3 font-medium">
+      <p class="text-yellow-300 font-bold text-center">"แด่เธอผู้เป็นความทรงจำอันอบอุ่นเสมอ..." 🐳✨</p>
+      <p>สุขสันต์วันเกิดนะคนเก่ง! จากเจ้าวาฬตัวใหญ่ใต้ท้องทะเลลึกเมื่อปีที่แล้ว วันนี้เดินทางมาถึงห้องนอนความทรงจำอันอบอุ่นของเราสองคน</p>
+      <p>ขอให้ปีนี้มีความสุขมากๆ มีรอยยิ้มสดใสในทุกๆ วัน ขอบคุณที่เดินเคียงข้างกัน และขอให้ความฝันทุกเรื่องของเธอส่องสว่างเหมือนแสงดาวนะ ❤️</p>
+    </div>
+    <div class="flex flex-col gap-2">
+      <button id="blowCandleBtn" class="w-full py-4 pixel-btn text-yellow-950 text-xs md:text-sm font-bold rounded-xl">💨 เป่าเทียนวันเกิด (Blow Candles)</button>
+      <button id="restartGameBtn" class="w-full py-3 pixel-btn text-yellow-950 text-xs md:text-sm font-bold rounded-xl">เล่นใหม่อีกครั้ง 🔄</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/audio.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
